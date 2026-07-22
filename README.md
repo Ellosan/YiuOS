@@ -66,13 +66,32 @@ bash vendor/yiuos/tools/apply-yiuos-buildsystem.sh
 
 # 3. Build — GSI for any Treble device:
 source build/envsetup.sh
-lunch yiuos_gsi_arm64-bp2a-userdebug
+lunch yiuos_gsi_arm64-bp4a-userdebug
 m
 
 # ...or a specific device with a LineageOS device tree (roomservice fetches it):
 breakfast <device>
 brunch <device>
 ```
+
+### Building on Crave
+
+With a [foss.crave.io](https://foss.crave.io) account, the whole build runs
+on Crave's farm instead of your machine. Put your `crave.conf` (downloaded
+from the Crave web console) next to the `crave` binary or at `~/crave.conf`,
+create a project from the **LineageOS** template, then:
+
+```bash
+./crave-0.2-7220-linux-amd64.bin run --no-patch -- \
+    "curl -s https://raw.githubusercontent.com/Ellosan/YiuOS/main/tools/crave-build.sh | bash"
+
+# when it finishes:
+./crave-0.2-7220-linux-amd64.bin pull out/target/product/gsi_arm64/system.img
+```
+
+`tools/crave-build.sh` does the repo init/sync, drops in the YiuOS manifest,
+applies the build-system patch, and builds `yiuos_gsi_arm64-bp4a-userdebug`.
+Override with env vars: `YIUOS_LUNCH_TARGET`, `YIUOS_RELEASE`, `YIUOS_VARIANT`.
 
 Flash the GSI to a Treble device with an unlocked bootloader:
 
