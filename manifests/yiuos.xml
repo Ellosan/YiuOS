@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Drop this file into .repo/local_manifests/ of a LineageOS checkout.
+     It swaps LineageOS's vendor branding repo for YiuOS. -->
+<manifest>
+  <remove-project name="LineageOS/android_vendor_lineage" />
+
+  <remote name="ellosan" fetch="https://github.com/Ellosan/" />
+  <project name="YiuOS" remote="ellosan" path="vendor/yiuos" revision="main" />
+</manifest>
