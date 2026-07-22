@@ -48,6 +48,13 @@ else
     repo sync -c -j"$(nproc)" --force-sync --no-clone-bundle --no-tags
 fi
 
+# 3b. The manifest pins vendor/yiuos to main; when building from another
+# branch of this repo, move the vendor checkout to that branch
+if [ "$BRANCH" != "main" ]; then
+    git -C vendor/yiuos fetch origin "$BRANCH"
+    git -C vendor/yiuos checkout FETCH_HEAD
+fi
+
 # 4. Point the LineageOS build system at vendor/yiuos
 bash vendor/yiuos/tools/apply-yiuos-buildsystem.sh
 
