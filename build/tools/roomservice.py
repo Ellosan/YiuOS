@@ -252,7 +252,11 @@ def add_to_manifest(dependencies):
 
 def fetch_dependencies(repo_path):
     print(f'Looking for dependencies in {repo_path}')
+    # YiuOS device trees use yiuos.dependencies; upstream LineageOS
+    # device trees ship lineage.dependencies
     dependencies_path = repo_path + '/yiuos.dependencies'
+    if not os.path.exists(dependencies_path):
+        dependencies_path = repo_path + '/lineage.dependencies'
     syncable_repos = []
     verify_repos = []
 
