@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- YiuOS framework string overlay -->
-<resources>
-    <!-- OS name shown in various system UI surfaces -->
-    <string name="android_system_label">YiuOS System</string>
-    <!-- Shown in some upgrade/boot dialogs -->
-    <string name="android_upgrading_title">YiuOS is starting…</string>
-</resources>
