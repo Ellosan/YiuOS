@@ -17,6 +17,8 @@ fi
 bash "${YIUOS_ROOT}/tools/hinoki/prepare-assets.sh"
 
 cd "${ANDROID_ROOT}"
+# Android 8.1's envsetup uses array expansions that are not nounset-safe.
+set +u
 # shellcheck disable=SC1091
 source build/envsetup.sh
 lunch yiuos_hinoki-userdebug
