@@ -51,7 +51,12 @@ jobs:
       - name: Validate manifest, product and launcher
         run: python3 tools/hinoki/validate.py
       - name: Install Android 8.1 compile API
-        run: sdkmanager "platforms;android-27"
+        shell: bash
+        run: |
+          set -e
+          sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          test -x "${sdkmanager}"
+          yes | "${sdkmanager}" "platforms;android-27"
       - name: Compile Yiu Home against API 27
         run: bash tools/hinoki/compile-launcher.sh
 
