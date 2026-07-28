@@ -16,6 +16,22 @@ fi
 
 bash "${YIUOS_ROOT}/tools/hinoki/prepare-assets.sh"
 
+# Android 8.1's Soong parser cannot parse the Android 16 Blueprint syntax in
+# the main vendor tree. The legacy product uses Android.mk modules exclusively,
+# so hide modern Blueprint files for this build and restore them on exit.
+HIDDEN_BP_LIST="$(mktemp)"
+restore_blueprints() {
+  while IFS= read -r -d '' blueprint; do
+    mv -f -- "${blueprint}.hinoki-disabled" "${blueprint}"
+  done < "${HIDDEN_BP_LIST}"
+  rm -f -- "${HIDDEN_BP_LIST}"
+}
+trap restore_blueprints EXIT
+while IFS= read -r -d '' blueprint; do
+  mv -f -- "${blueprint}" "${blueprint}.hinoki-disabled"
+  printf '%s\0' "${blueprint}" >> "${HIDDEN_BP_LIST}"
+done < <(find "${YIUOS_ROOT}" -type f -name Android.bp -print0)
+
 cd "${ANDROID_ROOT}"
 # Android 8.1's envsetup uses array expansions that are not nounset-safe.
 set +u
