@@ -98,7 +98,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "${ANDROID_ROOT}"
+          mkdir -p "${ANDROID_ROOT}" "${{ github.workspace }}/.home"
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -e ANDROID_ROOT=/workspace/android-15.1 \
