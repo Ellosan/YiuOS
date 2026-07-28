@@ -44,5 +44,7 @@ ln -sfn "${YIUOS_CHECKOUT}" "${ANDROID_ROOT}/vendor/yiuos"
 ANDROID_ROOT="${ANDROID_ROOT}" \
 YIUOS_ROOT="${YIUOS_CHECKOUT}" \
 BUILD_TARGET="${BUILD_TARGET:-bacon}" \
+BUILD_JOBS="${BUILD_JOBS:-$(nproc)}" \
+USE_CCACHE="${USE_CCACHE:-1}" \
 CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-50G}" \
   bash "${YIUOS_CHECKOUT}/tools/hinoki/build.sh"

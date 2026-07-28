@@ -21,13 +21,13 @@ cd "${ANDROID_ROOT}"
 source build/envsetup.sh
 lunch yiuos_hinoki-userdebug
 
-export USE_CCACHE=1
+export USE_CCACHE="${USE_CCACHE:-1}"
 export CCACHE_EXEC="${CCACHE_EXEC:-$(command -v ccache || true)}"
-if [[ -n "${CCACHE_EXEC}" ]]; then
+if [[ "${USE_CCACHE}" == "1" && -n "${CCACHE_EXEC}" ]]; then
   ccache -M "${CCACHE_MAXSIZE:-50G}"
 fi
 
-mka "${BUILD_TARGET}"
+mka -j"${BUILD_JOBS:-$(nproc)}" "${BUILD_TARGET}"
 
 if [[ "${BUILD_TARGET}" == "bacon" ]]; then
   PRODUCT_OUT="${ANDROID_ROOT}/out/target/product/hinoki"

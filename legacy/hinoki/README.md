@@ -29,7 +29,9 @@ Hardware validation requires a real phone and serial/`adb` logs.
 ## Manual build
 
 Use a Linux machine with Java 8, the Android build dependencies, at least
-32 GB RAM and 180 GB free disk.
+32 GB RAM and 180 GB free disk. A constrained build can run with less by
+setting `USE_CCACHE=0` and reducing `BUILD_JOBS`, but it will be substantially
+slower and may still run out of space.
 
 ```bash
 mkdir -p ~/android/yiuos-hinoki
