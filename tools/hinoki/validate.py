@@ -54,6 +54,16 @@ for token in ("YiuHome", "bootanimation.zip", "ro.yiuos.device=hinoki"):
     if token not in product:
         fail(f"product.mk is missing {token}")
 
+build_script = (ROOT / "tools/hinoki/build.sh").read_text(encoding="utf-8")
+for token in (
+    'KERNEL_ANDROID_MK="${ANDROID_ROOT}/kernel/sony/mt6757/Android.mk"',
+    'mv -- "${KERNEL_ANDROID_MK}" "${KERNEL_ANDROID_MK_DISABLED}"',
+    'mv -f -- "${KERNEL_ANDROID_MK_DISABLED}" "${KERNEL_ANDROID_MK}"',
+    "trap restore_build_inputs EXIT",
+):
+    if token not in build_script:
+        fail("build.sh does not safely isolate the conflicting MT6757 Android.mk")
+
 android_manifest = ET.parse(
     ROOT / "legacy/hinoki/apps/YiuHome/AndroidManifest.xml"
 ).getroot()

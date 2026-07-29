@@ -16,17 +16,38 @@ fi
 
 bash "${YIUOS_ROOT}/tools/hinoki/prepare-assets.sh"
 
+# The Sony MT6757 kernel has its own Android.mk integration, while LineageOS
+# 15.1 also builds TARGET_KERNEL_SOURCE through vendor/lineage. Loading both
+# creates two rules for Image.gz-dtb and a cycle through system's file list.
+# Hide the kernel-side integration and let LineageOS own the kernel build.
+KERNEL_ANDROID_MK="${ANDROID_ROOT}/kernel/sony/mt6757/Android.mk"
+KERNEL_ANDROID_MK_DISABLED="${KERNEL_ANDROID_MK}.yiuos-disabled"
+KERNEL_ANDROID_MK_HIDDEN=0
+
 # Android 8.1's Soong parser cannot parse the Android 16 Blueprint syntax in
 # the main vendor tree. The legacy product uses Android.mk modules exclusively,
-# so hide modern Blueprint files for this build and restore them on exit.
+# so hide modern Blueprint files for this build and restore all inputs on exit.
 HIDDEN_BP_LIST="$(mktemp)"
-restore_blueprints() {
+restore_build_inputs() {
+  if [[ "${KERNEL_ANDROID_MK_HIDDEN}" == "1" && -f "${KERNEL_ANDROID_MK_DISABLED}" ]]; then
+    mv -f -- "${KERNEL_ANDROID_MK_DISABLED}" "${KERNEL_ANDROID_MK}"
+  fi
   while IFS= read -r -d '' blueprint; do
     mv -f -- "${blueprint}.hinoki-disabled" "${blueprint}"
   done < "${HIDDEN_BP_LIST}"
   rm -f -- "${HIDDEN_BP_LIST}"
 }
-trap restore_blueprints EXIT
+trap restore_build_inputs EXIT
+
+if [[ -e "${KERNEL_ANDROID_MK_DISABLED}" ]]; then
+  echo "Stale disabled kernel build file exists: ${KERNEL_ANDROID_MK_DISABLED}" >&2
+  exit 1
+fi
+if [[ -f "${KERNEL_ANDROID_MK}" ]]; then
+  mv -- "${KERNEL_ANDROID_MK}" "${KERNEL_ANDROID_MK_DISABLED}"
+  KERNEL_ANDROID_MK_HIDDEN=1
+fi
+
 while IFS= read -r -d '' blueprint; do
   mv -f -- "${blueprint}" "${blueprint}.hinoki-disabled"
   printf '%s\0' "${blueprint}" >> "${HIDDEN_BP_LIST}"
