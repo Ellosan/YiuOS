@@ -1,0 +1,143 @@
+name: YiuOS Xperia XA1
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/hinoki.yml"
+      - "ci/hinoki/**"
+      - "legacy/hinoki/**"
+      - "manifests/hinoki-15.1.xml"
+      - "tools/hinoki/**"
+      - "vendorsetup.sh"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/hinoki.yml"
+      - "ci/hinoki/**"
+      - "legacy/hinoki/**"
+      - "manifests/hinoki-15.1.xml"
+      - "tools/hinoki/**"
+      - "vendorsetup.sh"
+  workflow_dispatch:
+    inputs:
+      sync_jobs:
+        description: Parallel repo sync jobs
+        required: true
+        default: "8"
+      build_target:
+        description: Android make target
+        required: true
+        type: choice
+        options:
+          - bacon
+          - bootimage
+          - recoveryimage
+        default: bacon
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hinoki-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate bring-up
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate manifest, product and launcher
+        run: python3 tools/hinoki/validate.py
+      - name: Install Android 8.1 compile API
+        shell: bash
+        run: |
+          set -e
+          sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          test -x "${sdkmanager}"
+          "${sdkmanager}" "platforms;android-27"
+      - name: Compile Yiu Home against API 27
+        run: bash tools/hinoki/compile-launcher.sh
+
+  build:
+    name: Build YiuOS for hinoki
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: [self-hosted, linux, x64, yiuos-builder]
+    timeout-minutes: 720
+    env:
+      ANDROID_ROOT: ${{ github.workspace }}/android-15.1
+      YIUOS_CHECKOUT: ${{ github.workspace }}/yiuos
+      SYNC_JOBS: ${{ inputs.sync_jobs }}
+      BUILD_TARGET: ${{ inputs.build_target }}
+      BUILD_JOBS: "2"
+      USE_CCACHE: "0"
+      CCACHE_MAXSIZE: 0G
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: yiuos
+
+      - name: Verify builder capacity
+        shell: bash
+        run: |
+          set -euo pipefail
+          available_kb="$(df -Pk "${{ github.workspace }}" | awk 'NR==2 {print $4}')"
+          required_gib=100
+          if [[ -f "${ANDROID_ROOT}/.repo/manifest.xml" ]]; then
+            required_gib=60
+          fi
+          required_kb=$((required_gib * 1024 * 1024))
+          if (( available_kb < required_kb )); then
+            echo "The hinoki build needs at least ${required_gib} GiB free in this state." >&2
+            df -h "${{ github.workspace }}"
+            exit 1
+          fi
+
+      - name: Build reproducible Android 8.1 toolchain image
+        run: docker build -t yiuos-hinoki-builder:${{ github.sha }} yiuos/ci/hinoki
+
+      - name: Sync LineageOS and build YiuOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${ANDROID_ROOT}" "${{ github.workspace }}/.home"
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e ANDROID_ROOT=/workspace/android-15.1 \
+            -e YIUOS_CHECKOUT=/workspace/yiuos \
+            -e SYNC_JOBS="${SYNC_JOBS}" \
+            -e BUILD_TARGET="${BUILD_TARGET}" \
+            -e BUILD_JOBS="${BUILD_JOBS}" \
+            -e USE_CCACHE="${USE_CCACHE}" \
+            -e CCACHE_MAXSIZE="${CCACHE_MAXSIZE}" \
+            -e HOME=/workspace/.home \
+            -v "${{ github.workspace }}:/workspace" \
+            yiuos-hinoki-builder:${{ github.sha }} \
+            bash /workspace/yiuos/tools/hinoki/ci-build.sh
+
+      - name: Create checksums
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          product="${ANDROID_ROOT}/out/target/product/hinoki"
+          find "${product}" -maxdepth 1 -type f \
+            \( -name 'YiuOS-*.zip' -o -name 'lineage-*.zip' -o \
+               -name 'boot.img' -o -name 'recovery.img' \) \
+            -print0 | sort -z | xargs -0 -r sha256sum > "${product}/SHA256SUMS"
+          test -s "${product}/SHA256SUMS"
+
+      - name: Upload flashable build
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: YiuOS-hinoki-${{ github.run_number }}
+          path: |
+            ${{ env.ANDROID_ROOT }}/out/target/product/hinoki/*-hinoki.zip
+            ${{ env.ANDROID_ROOT }}/out/target/product/hinoki/boot.img
+            ${{ env.ANDROID_ROOT }}/out/target/product/hinoki/recovery.img
+            ${{ env.ANDROID_ROOT }}/out/target/product/hinoki/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
