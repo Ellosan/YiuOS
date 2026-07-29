@@ -24,24 +24,29 @@ KERNEL_ANDROID_MK="${ANDROID_ROOT}/kernel/sony/mt6757/Android.mk"
 KERNEL_ANDROID_MK_DISABLED="${KERNEL_ANDROID_MK}.yiuos-disabled"
 KERNEL_ANDROID_MK_HIDDEN=0
 
-# Android automatically includes vendor/*/build/tasks/*.mk. YiuOS's current
-# task fragments target a much newer Android build system and conflict with
-# LineageOS 15.1's kernel and packaging tasks, so isolate them for this legacy
-# product. Android 8.1's Soong parser also cannot parse the Android 16 Blueprint
-# syntax in the main vendor tree.
+# Android automatically includes vendor/*/build/core/*.mk and
+# vendor/*/build/tasks/*.mk. YiuOS's current fragments target a much newer
+# Android build system and conflict with LineageOS 15.1's core, kernel and
+# packaging tasks, so isolate them for this legacy product. Android 8.1's Soong
+# parser also cannot parse the Android 16 Blueprint syntax in the main vendor
+# tree.
+HIDDEN_CORE_LIST="$(mktemp)"
 HIDDEN_TASK_LIST="$(mktemp)"
 HIDDEN_BP_LIST="$(mktemp)"
 restore_build_inputs() {
   if [[ "${KERNEL_ANDROID_MK_HIDDEN}" == "1" && -f "${KERNEL_ANDROID_MK_DISABLED}" ]]; then
     mv -f -- "${KERNEL_ANDROID_MK_DISABLED}" "${KERNEL_ANDROID_MK}"
   fi
+  while IFS= read -r -d '' core_fragment; do
+    mv -f -- "${core_fragment}.hinoki-disabled" "${core_fragment}"
+  done < "${HIDDEN_CORE_LIST}"
   while IFS= read -r -d '' task; do
     mv -f -- "${task}.hinoki-disabled" "${task}"
   done < "${HIDDEN_TASK_LIST}"
   while IFS= read -r -d '' blueprint; do
     mv -f -- "${blueprint}.hinoki-disabled" "${blueprint}"
   done < "${HIDDEN_BP_LIST}"
-  rm -f -- "${HIDDEN_TASK_LIST}" "${HIDDEN_BP_LIST}"
+  rm -f -- "${HIDDEN_CORE_LIST}" "${HIDDEN_TASK_LIST}" "${HIDDEN_BP_LIST}"
 }
 trap restore_build_inputs EXIT
 
@@ -53,6 +58,15 @@ if [[ -f "${KERNEL_ANDROID_MK}" ]]; then
   mv -- "${KERNEL_ANDROID_MK}" "${KERNEL_ANDROID_MK_DISABLED}"
   KERNEL_ANDROID_MK_HIDDEN=1
 fi
+
+while IFS= read -r -d '' core_fragment; do
+  if [[ -e "${core_fragment}.hinoki-disabled" ]]; then
+    echo "Stale disabled YiuOS build core fragment exists: ${core_fragment}.hinoki-disabled" >&2
+    exit 1
+  fi
+  mv -- "${core_fragment}" "${core_fragment}.hinoki-disabled"
+  printf '%s\0' "${core_fragment}" >> "${HIDDEN_CORE_LIST}"
+done < <(find "${YIUOS_ROOT}/build/core" -maxdepth 1 -type f -name '*.mk' -print0)
 
 while IFS= read -r -d '' task; do
   if [[ -e "${task}.hinoki-disabled" ]]; then

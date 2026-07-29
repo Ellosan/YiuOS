@@ -59,6 +59,8 @@ for token in (
     'KERNEL_ANDROID_MK="${ANDROID_ROOT}/kernel/sony/mt6757/Android.mk"',
     'mv -- "${KERNEL_ANDROID_MK}" "${KERNEL_ANDROID_MK_DISABLED}"',
     'mv -f -- "${KERNEL_ANDROID_MK_DISABLED}" "${KERNEL_ANDROID_MK}"',
+    'find "${YIUOS_ROOT}/build/core" -maxdepth 1 -type f -name \'*.mk\' -print0',
+    'mv -f -- "${core_fragment}.hinoki-disabled" "${core_fragment}"',
     'find "${YIUOS_ROOT}/build/tasks" -maxdepth 1 -type f -name \'*.mk\' -print0',
     'mv -f -- "${task}.hinoki-disabled" "${task}"',
     "trap restore_build_inputs EXIT",
