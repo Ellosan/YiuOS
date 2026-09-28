@@ -134,3 +134,29 @@ Apache License 2.0, same as upstream. This tree contains code
 Copyright The CyanogenMod Project and The LineageOS Project; their
 copyright notices are retained. YiuOS is not affiliated with LineageOS,
 Xiaomi, or MiOS.
+
+## Sony Xperia XA1 (hinoki)
+
+The first device port lives under [`legacy/hinoki`](legacy/hinoki). The Xperia
+XA1 hardware trees available from the Sony MTK community target LineageOS 15.1
+(Android 8.1), not the Android 16 base used by the main YiuOS vendor tree. The
+port therefore uses a dedicated compatibility product instead of presenting an
+unbootable Android 16 image as device support.
+
+The hinoki edition includes:
+
+- the `yiuos_hinoki-userdebug` product;
+- the MT6757 device, common, kernel and proprietary-vendor projects pinned by
+  [`manifests/hinoki-15.1.xml`](manifests/hinoki-15.1.xml);
+- **Yiu Home**, a real system launcher derived from the interactive prototype,
+  with the YiuOS home cards, app dock, status surface and privacy/control panel;
+- the orange YiuOS wallpaper and a 720-pixel boot animation generated from the
+  same branding source as the Android 16 edition; and
+- a manual GitHub Actions ROM build that publishes the OTA, boot image,
+  recovery image and SHA-256 checksums as an Actions artifact.
+
+See [`legacy/hinoki/README.md`](legacy/hinoki/README.md) for the build, device
+and flashing notes. The full ROM job intentionally targets a maintainer-run
+Linux builder labelled `yiuos-builder`: an Android source checkout and its
+outputs need substantially more disk and memory than a standard GitHub-hosted
+runner provides.

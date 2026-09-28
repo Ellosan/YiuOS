@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Xperia XA1 (hinoki) hardware support for the LineageOS 15.1 base.
+
+  YiuOS itself is intentionally not declared here. Clone this repository to
+  vendor/yiuos, or let tools/hinoki/ci-build.sh link the Actions checkout.
+-->
+<manifest>
+  <remote name="sonymtkdev" fetch="https://github.com/SonyMTKDev/" />
+
+  <project
+      name="android_device_sony_hinoki"
+      path="device/sony/hinoki"
+      remote="sonymtkdev"
+      revision="lineage-15.1" />
+  <project
+      name="android_device_sony_mt6757-common"
+      path="device/sony/mt6757-common"
+      remote="sonymtkdev"
+      revision="lineage-15.1" />
+  <project
+      name="android_kernel_sony_mt6757"
+      path="kernel/sony/mt6757"
+      remote="sonymtkdev"
+      revision="lineage-15.1" />
+  <project
+      name="android_vendor_sony_mt6757-common"
+      path="vendor/sony/mt6757-common"
+      remote="sonymtkdev"
+      revision="lineage-15.1" />
+</manifest>

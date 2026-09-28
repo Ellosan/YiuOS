@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Yiu Home</string>
+    <string name="ready">YiuOS ready</string>
+    <string name="privacy_summary">Private by default · no ads · no analytics</string>
+</resources>
